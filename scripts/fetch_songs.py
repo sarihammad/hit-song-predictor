@@ -27,41 +27,23 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 
 def fetch_playlist_tracks(sp, playlist_id, is_hit):
+    results = sp.playlist_tracks(playlist_id, limit=100)
     songs = []
-    offset = 0
-    limit = 100
-
-    while True:
-        try:
-            results = sp.playlist_tracks(playlist_id, offset=offset, limit=limit)
-        except spotipy.exceptions.SpotifyException as e:
-            print(f"Error fetching playlist {playlist_id}: {e}")
-            break
-
-        items = results.get('items', [])
-        if not items:
-            break
-
-        for item in items:
-            track = item.get('track')
-            if not track or not track.get('id'):
-                continue
-
-            features = sp.audio_features(track['id'])[0]
-            if features:
-                song = {
-                    'id': track['id'],
-                    'name': track['name'],
-                    'artist': track['artists'][0]['name'],
-                    'popularity': track['popularity'],
-                    'is_hit': is_hit
-                }
-                song.update(features)
-                songs.append(song)
-
-        offset += limit
-        time.sleep(0.2)
-
+    for item in results.get('items', []):
+        track = item.get('track')
+        if not track or not track.get('id'):
+            continue
+        features = sp.audio_features(track['id'])[0]
+        if features:
+            song = {
+                'id': track['id'],
+                'name': track['name'],
+                'artist': track['artists'][0]['name'],
+                'popularity': track['popularity'],
+                'is_hit': is_hit
+            }
+            song.update(features)
+            songs.append(song)
     return songs
 
 hit_songs = fetch_playlist_tracks(sp, hit_playlist_id, is_hit=1)
